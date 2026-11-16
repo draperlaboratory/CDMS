@@ -1,0 +1,103 @@
+/* =============================================================================
+ * Vader Modular Fuzzer (VMF)
+ * Copyright (c) 2021-2026 The Charles Stark Draper Laboratory, Inc.
+ * <vmf@draper.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 (only) as 
+ * published by the Free Software Foundation.
+ *  
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *  
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *  
+ * @license GPL-2.0-only <https://spdx.org/licenses/GPL-2.0-only.html>
+ * ===========================================================================*/
+.message,
+.timestamp,
+.level,
+.copyIcon {
+	display: inline;
+}
+
+.INFO > .level {
+	color: #808080;
+}
+
+.ERROR > .level {
+	color: #aa0000;
+}
+
+.timestamp {
+	background-color: #cccccc;
+}
+
+.copyIcon {
+	display: none;
+	position: absolute;
+	vertical-align: bottom;
+	border: none;
+	cursor: pointer;
+	padding: 0px 4px;
+	border-radius: 7px;
+}
+
+.copyIcon:hover {
+	background-color: #cccccc;
+}
+
+.logEntry {
+	display: inline-block;
+	line-height: normal;
+	width: 100%;
+}
+
+.logEntry:hover {
+	background-color: #eeeeee;
+}
+
+.logEntry:hover > .copyIcon {
+	display: inline-block;
+}
+
+#logFilters {
+	min-width: 20em;
+	padding: 0 2em;
+}
+
+#logFilters > h2 {
+	font-weight: bold;
+	font-size: medium;
+}
+
+.configFilter {
+	display: flex;
+	flex-direction: row;
+	gap: 1em;
+	margin: 0.5em 0;
+	align-items: end;
+}
+
+.configFilter input {
+	min-width: 0;
+}
+
+.controls {
+	visibility: hidden;
+}
+
+#loadMore {
+	line-height: normal;
+	text-align: center;
+	cursor: pointer;
+	border: none;
+	width: 100%;
+}
+
+#loadMore:hover {
+	font-weight: bold;
+}

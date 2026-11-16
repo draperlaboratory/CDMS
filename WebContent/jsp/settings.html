@@ -1,0 +1,97 @@
+<!-- 
+   ===============================================================================
+   Vader Modular Fuzzer (VMF)
+   Copyright (c) 2021-2026 The Charles Stark Draper Laboratory, Inc.
+   vmf@draper.com
+    
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License version 2 (only) as 
+   published by the Free Software Foundation.
+    
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program. If not, see http://www.gnu.org/licenses/.
+    
+   @license GPL-2.0-only https://spdx.org/licenses/GPL-2.0-only.html
+  ===============================================================================
+-->
+<!-- 
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8">
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+</head>
+
+<body>
+  <div style="padding: 1em; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 1em 5em">
+    <h1
+      style="font-size:19px; color: #000000; font-family: Arial, Helvetica, sans-serif; font-weight: bold; text-align: center;">
+      WebService Settings
+    </h1>
+
+    <div class="buttons" style="display: flex;">
+      <button class="genericbutton" id="LogBtn" name="Start Scheduler" onclick="showLog('TextArea');">Show Log</button>
+
+      <button class="genericbutton" id="CheckBtn" name="Check System" onclick="showInfo('TextArea');">
+        Check System
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: row; flex-grow: 1; overflow-x: hidden">
+      <div
+        style="overflow-y:scroll; width: 100%; border:1px #C0C0C0 solid;font-family:Courier;font-size:12px;position:relative">
+        <button id="loadMore" class="controls" onclick="loadMore()">Load More</button>
+        <div name="TextArea" id="TextArea">
+        </div>
+      </div>
+      <div id="logFilters" class="controls">
+        <h2>Log Filters</h2>
+        <label class="configFilter">
+          <div>
+            Minimum Log Level:
+          </div>
+          <select id="logLevelFilter" onchange="onFilterChange()">
+            <option>
+              DEBUG
+            </option>
+            <option selected>
+              INFO
+            </option>
+            <option>
+              ERROR
+            </option>
+          </select>
+        </label>
+        <label class="configFilter">
+          <div>
+            Source:
+          </div>
+          <select id="sourceFilter" onchange="onFilterChange()"></select>
+        </label>
+        <label class="configFilter">
+          <div>
+            Time Range:
+            <input type="datetime-local" id="startFilter" oninput="onFilterChange()" onchange="onFilterChange()" />
+          </div>-
+          <input type="datetime-local" id="endFilter" oninput="onFilterChange()" onchange="onFilterChange()" />
+        </label>
+        <label class="configFilter">
+          <div>
+            Search:
+          </div>
+          <input type="text" id="searchFilter" oninput="onFilterChange()" onchange="onFilterChange()" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

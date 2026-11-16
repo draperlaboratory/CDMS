@@ -1,0 +1,8 @@
+classes/
+*/classes/
+build/
+target/
+
+#VS Code
+.vscode/
+*.code-workspace

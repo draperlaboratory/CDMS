@@ -1,0 +1,12 @@
+# Maven
+target/
+*.class
+
+# Git
+.git/
+gitlab-ci.yml
+
+# Containers
+.containerignore
+Containerfile
+compose.yml

@@ -1,0 +1,71 @@
+FROM ubuntu:24.04 AS deps
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends --fix-missing \
+    openjdk-17-jdk \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s $(readlink -f $(which java) | sed 's:/bin/java::') /usr/lib/jvm/default-java
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+
+# Use a minimal base image
+FROM deps AS maven
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends --fix-missing \
+    maven \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp/CDMS
+
+COPY ./pom.xml /tmp/CDMS/pom.xml
+RUN mvn dependency:go-offline -B
+
+# Run Spotless to ensure Spotless dependencies are cached. CodeStandard.xml is not yet (and should not be) available, so use the default formatting options.
+RUN mvn spotless:check -DratchetFrom=NONE -DcodeStandard= -DlicenseHeader=pom.xml -Dspotless.apply.skip=true || true
+
+FROM deps AS tomcat
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends --fix-missing \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV TOMCAT_VERSION=9.0.122
+
+RUN wget -O /tmp/tomcat.tar.gz https://dlcdn.apache.org/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
+    tar xf /tmp/tomcat.tar.gz -C /opt && \
+    rm /tmp/tomcat.tar.gz && \
+    mv /opt/apache-tomcat-${TOMCAT_VERSION} /opt/tomcat
+
+# Set environment variables
+ENV CATALINA_HOME=/opt/tomcat
+ENV PATH=$CATALINA_HOME/bin:$PATH
+
+FROM maven AS build
+
+COPY ./ /tmp/CDMS
+
+RUN mvn clean package
+
+FROM tomcat AS cdms
+
+ENV CDMS_HOME=/opt/cdms
+
+# Add CDMS components
+RUN mkdir -p ${CDMS_HOME}
+COPY ./WebContent/META-INF/context.xml ${CATALINA_HOME}/webapps/manager/META-INF/context.xml
+COPY ./tomcat-utils/tomcat-users.xml ${CATALINA_HOME}/conf/tomcat-users.xml 
+COPY ./WebContent/WEB-INF/install/emptycdms.db ${CDMS_HOME}/cdms.db
+
+COPY --from=build /tmp/CDMS/target/CDMS.war ${CATALINA_HOME}/webapps/CDMS.war
+
+# Expose Tomcat port
+EXPOSE 8080
+
+# Start Tomcat
+CMD ["/opt/tomcat/bin/catalina.sh", "run"]

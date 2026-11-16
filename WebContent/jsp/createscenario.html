@@ -1,0 +1,211 @@
+<!-- 
+   ===============================================================================
+   Vader Modular Fuzzer (VMF)
+   Copyright (c) 2021-2026 The Charles Stark Draper Laboratory, Inc.
+   vmf@draper.com
+    
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License version 2 (only) as 
+   published by the Free Software Foundation.
+    
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program. If not, see http://www.gnu.org/licenses/.
+    
+   @license GPL-2.0-only https://spdx.org/licenses/GPL-2.0-only.html
+  ===============================================================================
+-->
+<!-- 
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8">
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+
+    <script type="text/javascript">
+
+        /**
+          * @type {(scenario: object, availableFiles: string[]) => {
+          *  title: String;
+          *  type: "fuzzer" | "analyzer" | "minimizer";
+          *  configurationFiles: String[];
+          *  seedFiles: String[]
+          * }}
+          * 
+          * Return the scenario object if it is a valid scenario object, or throw an error.
+          * 
+          * @param scenario the potential scenario object
+          * @param availableFiles the files in the open cluster. All config and seed files in the scenario must already be in the cluster.
+          */
+        const validateScenario = (scenario, availableFiles) => {
+            const { title, type, configurationFiles, seedFiles } = scenario;
+            if (!title) {
+                throw new Error("All scenarios need a title.")
+            }
+
+            if (typeof type !== "string" || !["fuzzer", "analyzer", "minimizer"].includes(type.toLowerCase())) {
+                throw new Error(`Scenario ${title} has an invalid type ${type ?? "(empty)"}`);
+            }
+
+            if (!Array.isArray(configurationFiles) || configurationFiles.length === 0) {
+                throw new Error(`Scenario ${title} has no configuration files`);
+            }
+
+            for (const file of configurationFiles) {
+                if (typeof file !== "string") {
+                    throw new Error(`Scenario ${title} has an invalid configuration file ${file ?? "(empty)"}`);
+                }
+
+                if (!availableFiles.includes(file)) {
+                    throw new Error(`Scenario ${title} includes a configuration file that is not in the cluster: ${file}`);
+                }
+            }
+
+            if (!Array.isArray(seedFiles) || seedFiles.length === 0) {
+                throw new Error(`Scenario ${title} has no seed files`);
+            }
+
+            for (const file of seedFiles) {
+                if (typeof file !== "string") {
+                    throw new Error(`Scenario ${title} has an invalid seed file ${file ?? "(empty)"}`);
+                }
+
+                if (!availableFiles.includes(file)) {
+                    throw new Error(`Scenario ${title} includes a seed file that is not in the cluster: ${file}`);
+                }
+            }
+
+            return scenario;
+        }
+
+        /**
+         * From a list of files, return a list of scenario files saved in those files.
+         */
+        const parseScenarioFiles = (files) => {
+            const availableFiles = $("#clusterFiles").first().find("option").map((_, option) => option.text).toArray();
+            const promises = Array.from(files).map((file) =>
+                new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+
+                    reader.addEventListener("load", () => {
+                        const json = JSON.parse(reader.result);
+                        if (Array.isArray(json)) {
+                            resolve(json);
+                        }
+
+                        resolve([json]);
+                    });
+
+                    reader.addEventListener("error", () => reject(reader.error));
+
+                    reader.readAsText(file);
+                }));
+
+            return Promise.all(promises).then((scenarioFiles) => {
+                return scenarioFiles.flat().map((scenarioFile) => {
+                    return validateScenario(scenarioFile, availableFiles);
+                })
+            })
+        };
+
+        /**
+         * Parse scenario files, save them, and empty the file input.
+         */
+        const scenarioFilesChanged = ({ target }) => {
+            if (target.files?.length === 0) {
+                return
+            }
+
+            parseScenarioFiles(target.files).then((scenarios) => {
+                newScenarios($('#SelectedId').get(0).innerHTML, scenarios)
+            }).catch((error) => {
+                console.error(error);
+                throw error;
+            }).finally(() => {
+                $("#ImportScenarioInput").val('')
+            })
+        }
+    </script>
+
+</head>
+
+<body>
+
+    <div style="width: fit-content; display: flex; flex-direction: column; gap: .5em">
+        <p hidden id="ClusterId">
+        </p>
+
+        <div id="newScenarioTitle" style="display: flex;
+    align-items: center;
+    gap: .5em;
+    align-self: center">
+            <font style="font-size:12px" color="#000000" face="Verdana">
+                <b>Title</b>
+            </font>
+            <input type="text" id='ScenarioTitle' style="max-width:250px;height:25px;z-index:9" name="title" value="">
+        </div>
+
+        <label style="align-self: center;" for="scenarioType"><i><b>Type</b></i>
+            <select name="scenarioType" id="scenarioType">
+                <option value="Fuzzer">
+                    Fuzzer
+                </option>
+                <option value="Analyzer">
+                    Analyzer
+                </option>
+                <option value="Minimizer">
+                    Minimizer
+                </option>
+            </select>
+        </label>
+
+        <div class="row">
+            <div style="display: flex;flex-direction: column;gap: 1em;">
+                <font style="font-size:12px;" color="#000000" face="Verdana">
+                    <b>Configuration
+                        Files</b>
+                </font>
+
+                <div id="ScenarioConfigList"
+                    style="resize: none;width:300px;height:150px;border:1px #C0C0C0 solid;font-family:Verdana;font-size:12px;">
+                </div>
+            </div>
+
+            <div style="display: flex;flex-direction: column;gap: 1em;">
+                <font style="font-size:12px" color="#000000" face="Verdana">
+                    <b>Seed
+                        List</b>
+                </font>
+
+                <div id="ScenarioSeedList"
+                    style="resize: none;width:300px;height:150px;border:1px #C0C0C0 solid;font-family:Verdana;font-size:12px;">
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="font-family: Verdana;padding:1.5em">
+            <input type="submit" class="genericbutton" id="CreateScenario" name="CreateScenario" value="Create"
+                onclick="newScenario(event,$('#ScenarioTitle').val(),$('#SelectedId').get(0).innerHTML,$('#ScenarioConfigList').find('#clusterFiles').val(), $('#ScenarioSeedList').find('#clusterFiles').val(),$('#scenarioType :selected').text());"
+                style="padding:.5em 2em;font-family:Verdana;font-size:12px;z-index:3">
+
+            OR
+
+            <div>
+                <button type="button" class="genericbutton" id="ImportScenario" name="ImportScenario"
+                    onclick="$('#ImportScenarioInput').click()"
+                    style="padding:.5em 2em;font-family:Verdana;font-size:12px;z-index:3">Import Scenario(s)</button>
+                <input id="ImportScenarioInput" accept=".json" type="file" style="display: none;" multiple hidden
+                    onchange="scenarioFilesChanged(event)" />
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

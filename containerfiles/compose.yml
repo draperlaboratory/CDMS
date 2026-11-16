@@ -1,0 +1,7 @@
+services:
+  cdms:
+    build:
+      context: ..
+      dockerfile: containerfiles/Containerfile
+    ports:
+      - "8080:8080"
